@@ -1,0 +1,24 @@
+{
+  "seen": [
+    "internet_archive:1956-09-31_Space_Secrets:1956-09-31_Space_Secrets.mp4",
+    "internet_archive:1945-04-05_Air_Army_Invades_Germany:1945-04-05_Air_Army_Invades_Germany.mp4"
+  ],
+  "log": [
+    {
+      "uid": "internet_archive:1956-09-31_Space_Secrets:1956-09-31_Space_Secrets.mp4",
+      "title": "Space Secrets. new Rocket To Seek New Cosmic Data, 1956/09/31",
+      "licence": "public domain",
+      "page": "https://archive.org/details/1956-09-31_Space_Secrets",
+      "credit": "Footage: Internet Archive \u2014 Space Secrets. new Rocket To Seek New Cosmic Data, 1956/09/31 (public domain) https://archive.org/details/1956-09-31_Space_Secrets",
+      "at": "2026-11-18T13:47:34"
+    },
+    {
+      "uid": "internet_archive:1945-04-05_Air_Army_Invades_Germany:1945-04-05_Air_Army_Invades_Germany.mp4",
+      "title": "Air Army Invades Germany, 1945/04/05",
+      "licence": "public domain",
+      "page": "https://archive.org/details/1945-04-05_Air_Army_Invades_Germany",
+      "credit": "Footage: Internet Archive \u2014 Air Army Invades Germany, 1945/04/05 (public domain) https://archive.org/details/1945-04-05_Air_Army_Invades_Germany",
+      "at": "2026-11-18T13:47:36"
+    }
+  ]
+}
