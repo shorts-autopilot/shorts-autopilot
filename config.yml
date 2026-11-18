@@ -1,0 +1,85 @@
+# ---------------------------------------------------------------------------
+# Shorts Autopilot settings. Everything here is free to run.
+# ---------------------------------------------------------------------------
+
+# How many Shorts go out per day, and at what times (24h clock).
+posts_per_day: 2
+publish_times: ["09:15", "18:45"]
+timezone: "UTC"          # e.g. "Europe/London", "America/New_York"
+
+# Length of each Short in seconds. 20-45 works best; anything under 180 counts
+# as a Short as long as it is vertical.
+clip_seconds: 32
+
+# Where your footage lives. Point this at a folder of files you have the
+# rights to use. Leave drive_folder_id empty to use the local folder only;
+# fill it with a Google Drive folder id to pull footage from Drive each run.
+source:
+  dir: sources
+  drive_folder_id: ""
+  max_source_seconds: 900
+
+# ---------------------------------------------------------------------------
+# Automatic footage. Every run tops up sources/ from libraries that are free to
+# publish from, forever, with no account, key or payment. Only items whose
+# licence is declared in their own metadata are accepted, non-commercial and
+# no-derivatives licences are refused, and the credit line is written into each
+# description automatically. Set enabled: false to use only your own files.
+# ---------------------------------------------------------------------------
+feed:
+  enabled: true
+  providers: ["internet_archive", "wikimedia"]  # add "nasa" for space footage
+  max_download_mb: 150
+  min_source_seconds: 60
+  keep_hours: 6            # downloaded clips are deleted after this many hours
+  # Only public domain / CC0 by default. A self-declared "CC BY" from a random
+  # uploader proves nothing, so it is not trusted without you checking by hand.
+  allowed_licenses: ["public-domain", "cc0"]
+  queries:                 # Internet Archive searches, spoken public-domain film
+    - "collection:(classic_tv)"
+    - "collection:(prelinger)"
+    - "collection:(universal_newsreels)"
+    - "collection:(feature_films)"
+  wikimedia_queries: ["interview", "documentary", "press conference", "speech", "news report"]
+
+# Skip windows with too little talking, or with audio too damaged for clear
+# captions. When a window fails either test the pipeline tries another one.
+min_speech_ratio: 0.35
+min_speech_confidence: 0.55
+
+# If the footage picked has no usable speech, try another file this many times
+# instead of publishing a caption-less Short.
+source_attempts: 3
+
+# Speech-to-text model: tiny (fastest) / base / small (most accurate, slower).
+# base is the default because archive film audio is rough.
+whisper_model: "base"
+
+# Don't reuse the same moment of the same file for this many days.
+reuse_cooldown_days: 45
+
+# ---------------------------------------------------------------------------
+# Look of the burnt-in captions
+# ---------------------------------------------------------------------------
+caption:
+  font_name: "DejaVu Sans"
+  size: 72
+  hook_size: 84
+  colour: "&H00FFFFFF"       # white text (AABBGGRR)
+  hook_colour: "&H0000E7FF"  # golden yellow
+# fonts_dir: "/path/to/folder/with/ttf"   # only if you ship your own font
+
+# ---------------------------------------------------------------------------
+# Titles, descriptions, tags
+# ---------------------------------------------------------------------------
+category_id: "24"            # 24 = Entertainment, 22 = People & Blogs, 20 = Gaming
+title_suffix: "#shorts"
+tags: []                     # always appended to generated tags
+# Extra credit appended to every description. Footage fetched by feed: already
+# carries its own credit from the source's licence metadata, so leave this empty
+# unless you also use your own files that need a different attribution.
+credit: ""
+
+# Optional: give this a free Gemini API key and hooks/titles get written by a
+# model instead of built from the transcript. Leave unset to stay 100% offline.
+llm_model: "gemini-2.5-flash"

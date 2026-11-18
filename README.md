@@ -93,3 +93,130 @@ add `DRIVE_FOLDER_ID` with the folder's id (the long string in its URL).
    consent screen" page. If it says *not configured yet*, click **Get started**:
    app name, your email as the support contact, choose **External** as the
    audience, then your email again as the developer contact.
+4. **Branding** tab: fill in everything marked required — app name, user support
+   email, developer contact email, **Application home page** and **Application
+   privacy policy link**. Both addresses can point at your GitHub repository:
+   `https://github.com/<your-name>/shorts-autopilot` and that same address plus
+   `/blob/main/PRIVACY.md` (that file is in this folder). If an **Authorised
+   domains** box appears, add `github.com`. Some accounts only demand these two
+   links, so create the repository first if you are asked for them.
+5. **Audience** tab: add your own Google account under **Test users**, then click
+   **Publish app** → **Confirm** so the status reads **In production**. An
+   unverified app is fine for your own channel; publishing is what stops your
+   login expiring after a week.
+6. **APIs & Services → Credentials → Create credentials → OAuth client ID →
+   Desktop app** → **Download JSON**.
+7. Put that file next to `setup_auth.py` and rename it `client_secrets.json`.
+8. On your own computer:
+
+   ```bash
+   pip install google-auth-oauthlib
+   python setup_auth.py
+   ```
+
+   A browser opens. Sign in with the Google account that owns the channel and
+   click **Allow**. The script prints three values: `YT_CLIENT_ID`,
+   `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN`.
+
+If you ever want AI-written hooks and titles instead of the built-in wording,
+get a free Gemini API key from [aistudio.google.com](https://aistudio.google.com)
+and keep it as `GEMINI_API_KEY` in step 3. Optional — without it, hooks and
+titles are built from what is actually said in the clip.
+
+### 3. Put it on GitHub
+
+Create a new **public** repository (public = unlimited free automation minutes),
+upload this folder's contents, then add the secrets:
+
+Settings → Secrets and variables → Actions → **New repository secret**:
+
+| Name | Value |
+|---|---|
+| `YT_CLIENT_ID` | from setup_auth.py |
+| `YT_CLIENT_SECRET` | from setup_auth.py |
+| `YT_REFRESH_TOKEN` | from setup_auth.py |
+| `GEMINI_API_KEY` | optional |
+
+Then open the **Actions** tab, pick `shorts-autopilot`, and click
+**Run workflow** once to prove it works. You should get two Shorts in your
+channel's Studio, sitting as scheduled (private until their slot).
+
+### 4. Walk away
+
+The workflow runs daily at 05:00 UTC and schedules the day's two Shorts at the
+times in `config.yml`. Nothing else to do.
+
+---
+
+## Settings you might change
+
+`config.yml`:
+
+| Setting | Meaning |
+|---|---|
+| `posts_per_day` | how many Shorts per day (default 2) |
+| `publish_times` | the daily slots, 24h clock (default 09:15 and 18:45) |
+| `timezone` | your timezone, e.g. `Europe/London` |
+| `clip_seconds` | length of each Short (default 32) |
+| `whisper_model` | `base` (default), `tiny` (faster, worse), `small` (more accurate, slower) |
+| `min_speech_ratio` | reject a window with less talking than this (0.35) |
+| `min_speech_confidence` | reject a window whose captions would be garbled (0.55) |
+| `source_attempts` | how many different files to try before giving up on a slot (3) |
+| `credit` | extra attribution added to every description (fetched footage already carries its own) |
+| `category_id` | 24 Entertainment, 22 People & Blogs, 20 Gaming |
+| `feed.enabled` | fetch free-to-publish footage automatically (default on) |
+| `feed.queries` | what the Internet Archive search looks for — change these to change the channel's subject |
+| `feed.providers` | `internet_archive`, `wikimedia`, and/or `nasa` |
+| `feed.max_download_mb` | size cap per downloaded clip (default 150) |
+| `feed.keep_hours` | how long a download is kept before it is deleted (default 6) |
+
+---
+
+## What can stop it, and the fix
+
+- **GitHub pauses schedules after 60 days with no repo activity.** Each run
+  commits its clip history back to the repo, which normally counts as activity.
+  If GitHub ever emails you that a workflow was disabled, open the Actions tab
+  and click **Enable workflow** once.
+- **The upload quota** is 100 uploads per day per Google project, shared by every
+  channel you connect. Two a day will never reach it.
+- **Google login expires** if the OAuth app is left in "Testing" — that is the
+  7-day expiry. Publishing the app in step 2.3 fixes it permanently.
+- **A run can fail** (network, YouTube hiccup). That day's Shorts are simply not
+  scheduled; the next run carries on with fresh footage. There is nothing to top
+  up by hand.
+- **Slow runs**: free runners get about 2 CPU cores. Two Shorts take roughly
+  3-5 minutes total. The workflow's limit is 55 minutes.
+
+---
+
+## Run it on your own machine
+
+```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python pipeline.py --dry-run --count 1
+```
+
+`--dry-run` renders everything into `output/` without uploading, which is the
+safe way to see what the captions and hooks look like before anything goes
+public. Drop `--dry-run` once you are happy.
+
+---
+
+## Files
+
+| File | What it is |
+|---|---|
+| `pipeline.py` | the whole machine |
+| `feed.py` | fetches free-to-publish footage and records its licence |
+| `config.yml` | your settings |
+| `setup_auth.py` | one-time YouTube login helper |
+| `.github/workflows/publish.yml` | the daily trigger |
+| `state/used.json` | which moments have already been used |
+| `state/feed.json` | where every downloaded clip came from, and its licence |
+| `PRIVACY.md` | the privacy policy Google asks for when publishing the OAuth app |
+
+Never commit `client_secrets.json` or `refresh_token.txt`; `.gitignore` already
+covers them. If a refresh token leaks, delete the OAuth client in Google Cloud
+and make a new one.

@@ -1,0 +1,19 @@
+# rendered output stays local
+output/
+
+# footage fetched by feed.py is downloaded fresh each run, never committed
+sources/ia-*
+sources/wc-*
+sources/nasa-*
+sources/*.license.json
+sources/*.part
+
+# never commit credentials
+client_secrets.json
+refresh_token.txt
+
+# python noise
+__pycache__/
+.venv/
+venv/
+*.pyc
