@@ -1,7 +1,9 @@
 {
   "seen": [
+    "internet_archive:Public_Prosecutor--Strange_Suicide:PublicProsecutor--Strange_Suicide.mp4",
+    "internet_archive:1945-04-05_Air_Army_Invades_Germany:1945-04-05_Air_Army_Invades_Germany.mp4",
     "internet_archive:1956-09-31_Space_Secrets:1956-09-31_Space_Secrets.mp4",
-    "internet_archive:1945-04-05_Air_Army_Invades_Germany:1945-04-05_Air_Army_Invades_Germany.mp4"
+    "internet_archive:13_demon_street_vine_of_death_1959:demon_street_of_death.mp4"
   ],
   "log": [
     {
@@ -19,6 +21,22 @@
       "page": "https://archive.org/details/1945-04-05_Air_Army_Invades_Germany",
       "credit": "Footage: Internet Archive \u2014 Air Army Invades Germany, 1945/04/05 (public domain) https://archive.org/details/1945-04-05_Air_Army_Invades_Germany",
       "at": "2026-11-18T13:47:36"
+    },
+    {
+      "uid": "internet_archive:Public_Prosecutor--Strange_Suicide:PublicProsecutor--Strange_Suicide.mp4",
+      "title": "Public Prosecutor: The Case of the Strange Suicide",
+      "licence": "public domain",
+      "page": "https://archive.org/details/Public_Prosecutor--Strange_Suicide",
+      "credit": "Footage: Internet Archive \u2014 Public Prosecutor: The Case of the Strange Suicide (public domain) https://archive.org/details/Public_Prosecutor--Strange_Suicide",
+      "at": "2026-11-18T15:15:34"
+    },
+    {
+      "uid": "internet_archive:13_demon_street_vine_of_death_1959:demon_street_of_death.mp4",
+      "title": "13 Demon Street (The Vine of Death)",
+      "licence": "public domain",
+      "page": "https://archive.org/details/13_demon_street_vine_of_death_1959",
+      "credit": "Footage: Internet Archive \u2014 13 Demon Street (The Vine of Death) (public domain) https://archive.org/details/13_demon_street_vine_of_death_1959",
+      "at": "2026-11-18T15:15:38"
     }
   ]
 }
