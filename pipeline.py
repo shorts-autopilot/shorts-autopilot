@@ -54,18 +54,6 @@ STOPWORDS = set(
 )
 
 
-LINK_RE = re.compile(r"(?:https?://|www\.)\S+", re.I)
-
-
-def strip_links(text: str) -> str:
-    """YouTube treats links in a Shorts description as spam, so never send one."""
-    text = LINK_RE.sub("", str(text))
-    text = re.sub(r"[ \t]{2,}", " ", text)
-    text = re.sub(r"\(\s*\)|\[\s*\]", "", text)
-    text = re.sub(r"\s+([,.;:])", r"\1", text)
-    return text.strip()
-
-
 # --------------------------------------------------------------------------
 # basics
 # --------------------------------------------------------------------------
@@ -123,7 +111,7 @@ def load_config(path: Path) -> dict:
     cfg.setdefault("reuse_cooldown_days", 45)
     cfg.setdefault("source_attempts", 3)
     cfg.setdefault("fonts_dir", "")
-    cfg.setdefault("title_suffix", "")
+    cfg.setdefault("title_suffix", "#shorts")
     cfg.setdefault("credit", "")
     cfg.setdefault("tags", [])
     cfg.setdefault("caption", {})
@@ -210,11 +198,11 @@ def source_credit(path: Path) -> str:
     except (OSError, json.JSONDecodeError):
         return ""
     if info.get("credit"):
-        return strip_links(str(info["credit"]))[:400]
-    author = strip_links(str(info.get("author") or "unknown creator"))[:80]
+        return str(info["credit"])[:400]
+    author = str(info.get("author") or "unknown creator")[:80]
     licence = str(info.get("licence") or "free licence")
-    # The source page is deliberately left out: no links in the description.
-    return strip_links(f"Footage: {author} ({licence})")
+    page = str(info.get("page") or "")
+    return f"Footage: {author} ({licence})" + (f" {page}" if page else "")
 
 
 def pick_source(files: list[Path], used: set, rng: random.Random,
@@ -301,95 +289,6 @@ def speech_bounds(words: list[dict], duration: float) -> tuple[float, float]:
     return start, end
 
 
-def sentence_text(span: list[dict]) -> str:
-    return re.sub(r"\s+", " ", " ".join(w["w"] for w in span)).strip()
-
-
-def sentence_complete(span: list[dict]) -> bool:
-    """A real sentence ends with punctuation and has enough words to mean something."""
-    return bool(span) and len(span) >= 3 and bool(re.search(r"[.!?][\"')\]]?$", span[-1]["w"]))
-
-
-def split_sentences(words: list[dict]) -> list[list[dict]]:
-    """Group spoken words into sentences, using punctuation and natural pauses."""
-    sentences: list[list[dict]] = []
-    current: list[dict] = []
-    for index, word in enumerate(words):
-        current.append(word)
-        following = words[index + 1] if index + 1 < len(words) else None
-        gap = (following["s"] - word["e"]) if following else 99.0
-        if re.search(r"[.!?][\"')\]]?$", word["w"]) or gap > 0.75 or following is None:
-            sentences.append(current)
-            current = []
-    if current:
-        sentences.append(current)
-    return sentences
-
-
-def window_score(win: dict, target: float) -> float:
-    """How good this stretch is as a Short: clear speech, complete sentence, punchy open."""
-    flat = win["words"]
-    duration = max(0.1, win["dur"])
-    density = sum(max(0.0, w["e"] - w["s"]) for w in flat) / duration
-    first = win["sentences"][0]
-    first_text = sentence_text(first)
-
-    first_words = [w.lower().strip(".,!?'\"") for w in first_text.split()]
-    informative = any(w in ACTION_VERBS for w in first_words) or bool(
-        re.match(r"^(i|we|he|she|they|it|this|that|there|the|a|an|you|nobody|everyone)\b",
-                 first_text, re.I))
-
-    score = 2.5 * min(1.0, density / 0.55)
-    score -= 1.6 * abs(duration - target) / target
-    score += 1.1 if sentence_complete(first) else 0.0
-    if 4 <= len(first) <= 9 and informative:
-        score += 1.2
-    elif len(first) <= 13:
-        score += 0.4
-    if len(first) < 4:
-        score -= 0.6
-    score += 0.7 if first_text.rstrip().endswith("?") else 0.0
-    if re.match(r"^(so|and|but|now|well|okay|oh|uh|um|yeah|wow|whoa|hey|look)\b", first_text, re.I):
-        score -= 0.8
-    if first_text[:1].isupper():
-        score += 0.3
-    return score
-
-
-def rank_windows(sentences: list[list[dict]], target: float, limit: int = 6) -> list[dict]:
-    """Every stretch that starts and ends on a whole sentence, best first."""
-    candidates: list[dict] = []
-    upper = target + max(9.0, target * 0.35)
-    lower = max(6.0, target * 0.65)
-    for i in range(len(sentences)):
-        for j in range(i, len(sentences)):
-            start = sentences[i][0]["s"]
-            end = sentences[j][-1]["e"]
-            duration = end - start
-            if duration < lower:
-                continue
-            if duration > upper:
-                break
-            candidates.append({
-                "start": start,
-                "end": end,
-                "dur": duration,
-                "sentences": sentences[i:j + 1],
-                "words": [w for span in sentences[i:j + 1] for w in span],
-            })
-    for win in candidates:
-        win["score"] = window_score(win, target)
-    candidates.sort(key=lambda w: -w["score"])
-
-    picked: list[dict] = []
-    for win in candidates:
-        if all(abs(win["start"] - other["start"]) > 2.0 for other in picked):
-            picked.append(win)
-        if len(picked) >= limit:
-            break
-    return picked
-
-
 # --------------------------------------------------------------------------
 # captions (ASS is rendered by libass, which ships with ffmpeg)
 # --------------------------------------------------------------------------
@@ -456,10 +355,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             f"Dialogue: 0,{ass_time(0)},{ass_time(hook_until)},Hook,,0,0,0,,"
             f"{{\\fad(160,220)}}{clean(hook.upper())}\n"
         )
-    # Captions run from the first word; the gold hook simply sits above them.
+    floor = hook_until if hook else 0.0
     timed = []
     for chunk in chunk_words(words):
-        start = max(0.0, chunk[0]["s"] - offset - 0.06)
+        start = max(floor, chunk[0]["s"] - offset - 0.06)
         end = chunk[-1]["e"] - offset + 0.12
         if end > start:
             timed.append([start, end, chunk])
@@ -546,11 +445,8 @@ def render(clip: Path, ass_text: str, cfg: dict, workdir: Path) -> Path:
             "[fg]scale=1012:-2:flags=lanczos[fgs];"
             "[bgb][fgs]overlay=(W-w)/2:(H-h)/2[base]"
         )
-    total = probe(clip)[0]
-    fade_out = max(0.0, min(0.4, total - 0.45))
     graph += (
-        f";[base]subtitles=captions.ass{fonts_arg},"
-        f"fade=t=in:st=0:d=0.22,fade=t=out:st={fade_out:.2f}:d=0.35,format=yuv420p[v]"
+        f";[base]subtitles=captions.ass{fonts_arg},fade=t=in:st=0:d=0.25,format=yuv420p[v]"
     )
 
     out = workdir / "short.mp4"
@@ -643,183 +539,35 @@ def clip_words(text: str, max_chars: int = 70, max_words: int = 10) -> str:
     return " ".join(kept).rstrip(" ,.;:-")
 
 
-DISCOURSE = {
-    "so", "well", "and", "but", "now", "okay", "ok", "oh", "uh", "um", "hmm",
-    "right", "look", "listen", "hey", "yeah",
-}
-TAIL_STOP = {
-    "a", "an", "the", "and", "or", "but", "that", "of", "to", "in", "on", "at",
-    "for", "with", "is", "are", "was", "were", "be", "been", "it", "this", "these",
-    "those", "my", "your", "his", "her", "their", "our", "i", "you", "we", "they",
-    "he", "she", "as", "than", "then", "so", "if", "from", "by", "me", "us", "them",
-    "him", "there", "have", "has", "had", "will", "would", "can", "could", "which",
-}
-ACTION_VERBS = set("""was were is are had has got said told went came made took found saw
-knew thought looked turned started stopped killed saved built invented discovered decided
-left ran stole won lost died lived became called heard felt gave put kept held brought
-wrote sold bought opened closed broke fixed used needed wanted tried asked answered
-walked drove flew landed escaped survived arrived happened appeared vanished married
-arrested rescued attacked filmed recorded launched signed fought shot burned carried
-climbed dropped fell""".split())
-
-
-def strip_openers(text: str) -> str:
-    """Remove the verbal tics a spoken sentence usually opens with."""
-    words = clean(text).split()
-    while len(words) > 3:
-        head = words[0].lower().strip(",;:")
-        pair = " ".join(w.lower().strip(",;:") for w in words[:2])
-        if head in DISCOURSE:
-            words.pop(0)
-        elif pair in {"you know", "i mean", "kind of", "sort of"}:
-            del words[:2]
-        else:
-            break
-    return " ".join(words)
-
-
-def title_from(raw: str, limit: int = 70) -> str:
-    """A whole line: trimmed at a clause boundary, never in the middle of a thought."""
-    text = strip_links(strip_openers(raw)).strip().strip("\"'-,")
-    if not text:
-        return ""
-    text = text[:1].upper() + text[1:]
-
-    if len(text) > limit:
-        for separator in (", which ", ", that ", " which ", " that ", "; ", " - ",
-                          ", because ", ", so ", ", and ", " and "):
-            index = text.lower().find(separator)
-            if index >= 28:
-                candidate = text[:index].rstrip(" ,;:-")
-                if 20 <= len(candidate) <= limit:
-                    text = candidate
-                    break
-
-    if len(text) > limit:
-        for match in re.finditer(r"[,;:]\s+", text):
-            if 22 <= match.start() <= limit:
-                candidate = text[:match.start()].rstrip(" ,;:-")
-                if len(candidate.split()) >= 5:
-                    text = candidate
-                    break
-
-    if len(text) > limit:
-        text = clip_words(text, max_chars=limit, max_words=16)
-
-    words = text.split()
-    while len(words) > 4 and words[-1].lower().strip(".,!?'\"") in TAIL_STOP:
-        words.pop()
-    text = " ".join(words).rstrip(" ,;:-")
-    if not text.endswith(("!", "?", "…")):
-        text = text.rstrip(".")
-    return text.strip()
-
-
-def title_score(title: str, kws: list[str]) -> float:
-    words = title.split()
-    count = max(1, len(words))
-    low = title.lower()
-    score = 0.0
-    if 30 <= len(title) <= 68:
-        score += 2.2
-    elif len(title) < 22:
-        score -= 1.6
-    elif len(title) > 68:
-        score -= 2.0
-    if title.endswith(("?", "!")):
-        score += 1.0
-    if any(k and k in low for k in kws[:6]):
-        score += 0.9
-    if sum(1 for w in words if w.lower().strip(".,!?'\"") in STOPWORDS) / count > 0.45:
-        score -= 1.0
-    if re.search(r"\b(you know|kind of|sort of|i mean|anyway|whatever|or something)\b", low):
-        score -= 1.2
-    if any(w.lower().strip(".,!?'\"") in ACTION_VERBS for w in words):
-        score += 0.7
-    if re.match(r"^(i|we|he|she|they|it|this|that|there|the|a|an|nobody|everyone)\b", low):
-        score += 0.35
-    return score
-
-
-def hook_from(raw: str, kws: list[str], max_words: int = 5, max_chars: int = 32) -> str:
-    """The on-screen opener, taken from the same sentence the title comes from."""
-    text = strip_openers(raw)
-    clause = re.split(r"[,;:]|\s(?:which|that|because|when|while|if|but)\s", text, maxsplit=1)[0]
-    words = clause.split()
-    if text.rstrip().endswith("?") and len(words) > 6:
-        # Questions open with "don't you think", which reads badly as a hook.
-        words = words[-6:]
-        while len(words) > 3 and words[0].lower().strip(".,!?'\"") in STOPWORDS:
-            words.pop(0)
-    while len(words) > 2 and words[-1].lower().strip(".,!?'\"") in TAIL_STOP:
-        words.pop()
-    kept: list[str] = []
-    for word in words[:max_words]:
-        if len(" ".join(kept + [word])) > max_chars:
-            break
-        kept.append(word)
-    hook = " ".join(kept).strip(" \"'.,;:!?-")
-    if len(hook.split()) < 2:
-        # Nothing usable before the first comma: open on the sentence itself.
-        kept = []
-        for word in text.split()[:4]:
-            if len(" ".join(kept + [word])) > max_chars:
-                break
-            kept.append(word)
-        hook = " ".join(kept).strip(" \"'.,;:!?-")
-    if len(hook.split()) < 2 and kws:
-        hook = " ".join(kws[:3]).title()
-    return hook
-
-
 def template_metadata(words: list[dict], kws: list[str], cfg: dict) -> dict:
-    """Extractive packaging: title and hook are built from what is actually said."""
     text = spoken_text(words)
-    best: dict | None = None
-    for span in split_sentences(words):
-        if len(span) < 4:
-            continue
-        raw = sentence_text(span)
-        title = title_from(raw)
-        if not title:
-            continue
-        # Only write copy from speech the model heard clearly: a misheard word
-        # makes a title look broken rather than intriguing.
-        clarity = speech_confidence(span)
-        if clarity < float(cfg.get("min_title_confidence", 0.55)):
-            continue
-        score = title_score(title, kws) + 1.2 * min(1.0, (clarity - 0.55) / 0.30)
-        if best is None or score > best["score"]:
-            best = {"score": score, "title": title, "raw": raw, "clarity": clarity}
+    sentence = tidy_title(best_sentence(text))
+    hook_words = clean(sentence).split()[:6]
+    hook = " ".join(hook_words).rstrip(",.;:!?")
 
-    sentences = split_sentences(words)
-    opening = sentence_text(sentences[0]) if sentences else text
-
-    if best:
-        title = best["title"]
-        log(f"  title from clarity {best['clarity']:.2f}: \"{title}\"")
+    if sentence:
+        title = clip_words(sentence)
+    elif kws:
+        title = f"{kws[0].title()} — you have to see this"
     else:
-        title = kws[0].title() if kws else "Watch this"
+        title = "Wait for it"
+    suffix = cfg.get("title_suffix", "")
+    if suffix and suffix.lower() not in title.lower():
+        title = f"{title} {suffix}".strip()
+    title = title[:100]
 
-    # The gold line must match the words being spoken as it appears, so it comes
-    # from the opening sentence; the title is free to use the strongest line.
-    hook = hook_from(opening, kws)
-    log(f"  hook from opening: \"{hook}\"")
-
-    suffix = str(cfg.get("title_suffix") or "").strip()
-    if suffix and suffix.lower() not in title.lower() and len(title) + len(suffix) + 1 <= 95:
-        title = f"{title} {suffix}"
-    title = strip_links(title)[:100]
-
-    quote = first_sentence(text)[:220]
-    hashtags = " ".join(
-        "#" + re.sub(r"[^a-z0-9]", "", k) for k in kws[:3] if re.sub(r"[^a-z0-9]", "", k)
-    )
+    hashtags = " ".join(f"#{k.replace(chr(39), '')}" for k in kws[:3]) if kws else ""
+    parts = []
+    if hook:
+        parts.append(hook.upper() if len(hook) < 60 else hook)
+    if text:
+        parts.append(first_sentence(text)[:220])
     if hashtags:
-        hashtags += " #shorts"
-    parts = [p for p in (quote if quote and quote != title else "", hashtags,
-                         str(cfg.get("credit") or "")) if str(p).strip()]
-    description = strip_links("\n\n".join(parts))[:4900]
+        parts.append(hashtags)
+    parts.append("#Shorts")
+    if cfg.get("credit"):
+        parts.append(str(cfg["credit"]))
+    description = "\n\n".join(parts)[:4900]
 
     tags = list(dict.fromkeys(kws + [str(t) for t in cfg.get("tags", [])]))[:15]
     return {"title": title, "description": description, "hook": hook, "tags": tags}
@@ -833,15 +581,11 @@ def llm_metadata(words: list[dict], kws: list[str], cfg: dict) -> dict | None:
         return None
     model = cfg.get("llm_model") or "gemini-2.5-flash"
     prompt = (
-        "You package YouTube Shorts. Given a transcript of the clip, reply with JSON only: "
-        '{"hook": "...", "title": "...", "description": "..."}.\n'
-        "Rules: the hook is 3-5 words shown on screen at the very start, no punctuation, "
-        "under 30 characters, and must make sense alone. The title is ONE complete, "
-        "grammatical sentence of 35-65 characters that is accurate to the transcript - "
-        "no truncation, no unfinished phrases, no invented facts, no clickbait lies, "
-        "no hashtags, no quotes. You may phrase it for curiosity but only from what is "
-        "actually said. The description is 1-2 short sentences of context plus 3 hashtags. "
-        "Never include a URL or a link anywhere.\n"
+        "You write YouTube Shorts packaging. Given a transcript, reply with JSON only: "
+        '{"hook": "...", "title": "...", "description": "..."}. '
+        "hook = 3-6 punchy words shown on screen at the start, no punctuation, under 40 chars. "
+        "title = under 70 chars, curiosity-driven, no clickbait lies, no hashtags. "
+        "description = 2 short sentences plus 3 hashtags. "
         f"Transcript:\n{text[:1500]}"
     )
     body = json.dumps({
@@ -862,11 +606,11 @@ def llm_metadata(words: list[dict], kws: list[str], cfg: dict) -> dict | None:
 
     out = {}
     if isinstance(payload.get("hook"), str):
-        out["hook"] = clean(payload["hook"]).strip(" \"'.,;:!?-")[:48]
+        out["hook"] = clean(payload["hook"])[:48]
     if isinstance(payload.get("title"), str):
-        out["title"] = strip_links(clean(payload["title"]))[:95]
+        out["title"] = clean(payload["title"])[:95]
     if isinstance(payload.get("description"), str):
-        out["description"] = strip_links(payload["description"])[:4800]
+        out["description"] = payload["description"][:4800]
     return out or None
 
 
@@ -949,51 +693,53 @@ def build_one(cfg: dict, files: list[Path], used: set, rng: random.Random, workd
         used_files.add(source.name)  # never build two Shorts from one file in a run
     log(f"source: {source.name} @ {start:.1f}s")
 
-    target = float(cfg["clip_seconds"])
-    scan_len = min(max(target * 2.6, 80.0), 150.0)
-    scan_len = min(scan_len, max(12.0, probe(source)[0] - start))
-
-    scan = workdir / "scan.mp4"
-    cut(source, start, scan_len, scan)
-    scan_dur = probe(scan)[0]
+    raw = workdir / "raw.mp4"
+    longest = max(float(cfg["clip_seconds"]) * 1.6, float(cfg["clip_seconds"]) + 6)
+    cut(source, start, longest, raw)
+    duration = probe(raw)[0]
 
     model = cfg.get("whisper_model", "base")
-    log(f"  transcribing {scan_dur:.0f}s to find a clean cut")
-    words_all = transcribe(scan, model)
-    log(f"  {len(words_all)} words heard")
-    if not words_all:
-        raise NoSpeech(f"no speech in {source.name} around {start:.0f}s")
+    log("  transcribing")
+    words = transcribe(raw, model)
+    ratio = speech_ratio(words, duration)
+    confidence = speech_confidence(words)
+    log(f"  {len(words)} words, speech ratio {ratio:.2f}, clarity {confidence:.2f}")
 
-    windows = rank_windows(split_sentences(words_all), target)
-    if not windows:
-        raise NoSpeech(f"no whole sentence long enough in {source.name} around {start:.0f}s")
+    thin = (
+        not words
+        or ratio < float(cfg["min_speech_ratio"])
+        or confidence < float(cfg.get("min_speech_confidence", 0.55))
+    )
+    if thin:
+        # Archive footage has dead air and damaged audio, so try another window
+        # and keep whichever one transcribes clearly.
+        log("  thin or unclear audio here, trying another window")
+        shift = rng.uniform(30, 120)
+        if start + shift + longest < probe(source)[0]:
+            cut(source, start + shift, longest, raw)
+            start += shift
+            duration = probe(raw)[0]
+            alt = transcribe(raw, model)
+            alt_ratio = speech_ratio(alt, duration)
+            alt_confidence = speech_confidence(alt)
+            log(f"  second window: {len(alt)} words, speech ratio {alt_ratio:.2f}, "
+                f"clarity {alt_confidence:.2f}")
+            if alt and (alt_ratio >= ratio or alt_confidence > confidence):
+                words = alt
 
-    chosen = None
-    for win in windows[:3]:
-        ratio = speech_ratio(win["words"], win["dur"])
-        confidence = speech_confidence(win["words"])
-        log(f"  candidate {win['start']:.1f}-{win['end']:.1f}s "
-            f"(ratio {ratio:.2f}, clarity {confidence:.2f})")
-        if (ratio >= float(cfg["min_speech_ratio"])
-                and confidence >= float(cfg.get("min_speech_confidence", 0.55))):
-            chosen = win
-            break
-    if chosen is None:
-        raise NoSpeech(f"every clean window in {source.name} was too quiet or unclear")
+    ratio = speech_ratio(words, duration)
+    if not words or ratio < float(cfg["min_speech_ratio"]):
+        raise NoSpeech(f"no clear speech in {source.name} around {start:.0f}s")
 
-    # A little air either side so the clip never opens or closes on a clipped syllable.
-    pad_start = max(0.0, chosen["start"] - 0.25)
-    pad_end = min(scan_dur, chosen["end"] + 0.45)
-    length = pad_end - pad_start
-    absolute_start = start + pad_start
-
+    offset, end = speech_bounds(words, duration)
+    offset = min(offset, max(0.0, duration - 6))
+    length = min(float(cfg["clip_seconds"]), max(5.0, end - offset))
     clip = workdir / "clip.mp4"
-    cut(scan, pad_start, length, clip)
+    cut(raw, offset, length, clip)
     words = [
-        {"w": w["w"], "s": w["s"] - pad_start, "e": w["e"] - pad_start, "p": w["p"]}
-        for w in chosen["words"] if w["e"] > pad_start and w["s"] < pad_end
+        {"w": w["w"], "s": w["s"] - offset, "e": w["e"] - offset}
+        for w in words if w["e"] > offset and w["s"] < offset + length
     ]
-    log(f"  clipped {length:.1f}s: \"{sentence_text(chosen['sentences'][0])[:70]}\"")
 
     kws = keywords(words)
     meta = template_metadata(words, kws, cfg)
@@ -1019,7 +765,7 @@ def build_one(cfg: dict, files: list[Path], used: set, rng: random.Random, workd
 
     return {
         "file": source.name,
-        "start": round(absolute_start, 1),
+        "start": round(start, 1),
         "video_id": video_id,
         "title": meta["title"],
         "hook": meta.get("hook", ""),
