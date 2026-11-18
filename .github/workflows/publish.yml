@@ -1,0 +1,72 @@
+name: shorts-autopilot
+
+# Runs once a day and schedules two Shorts. Cron is UTC.
+# 05:00 UTC = one run that queues the day's two uploads.
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch: {}   # lets you start a run by hand if you ever want to
+
+permissions:
+  contents: write         # needed to save which clips have been used
+
+concurrency:
+  group: shorts-autopilot
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ffmpeg and a font
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Cache the speech model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-base-v1
+
+      - name: Fetch footage from Google Drive
+        if: ${{ vars.DRIVE_FOLDER_ID != '' }}
+        env:
+          DRIVE_FOLDER_ID: ${{ vars.DRIVE_FOLDER_ID }}
+        run: python -c "import os,gdown; gdown.download_folder(id=os.environ['DRIVE_FOLDER_ID'], output='sources', quiet=False, use_cookies=False)"
+
+      # This step also downloads the day's footage from public-domain libraries,
+      # so there is nothing to add by hand.
+      - name: Fetch footage, build and schedule
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python pipeline.py --count 2
+
+      - name: Save clip history
+        if: always()
+        run: |
+          git config user.name "shorts-autopilot"
+          git config user.email "shorts-autopilot@users.noreply.github.com"
+          mkdir -p state
+          git add -A state/
+          if git diff --cached --quiet; then
+            echo "No state change."
+          else
+            git commit -m "chore: record published clips [skip ci]"
+            git push
+          fi
