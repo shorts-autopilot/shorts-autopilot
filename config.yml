@@ -47,6 +47,10 @@ feed:
 min_speech_ratio: 0.35
 min_speech_confidence: 0.55
 
+# Titles and hooks are only written from speech the model heard at least this
+# clearly. Raise it for cleaner copy from fewer clips, lower it to be less picky.
+min_title_confidence: 0.55
+
 # If the footage picked has no usable speech, try another file this many times
 # instead of publishing a caption-less Short.
 source_attempts: 3
@@ -73,7 +77,7 @@ caption:
 # Titles, descriptions, tags
 # ---------------------------------------------------------------------------
 category_id: "24"            # 24 = Entertainment, 22 = People & Blogs, 20 = Gaming
-title_suffix: "#shorts"
+title_suffix: ""          # titles stay clean; "#shorts" is added to the description instead
 tags: []                     # always appended to generated tags
 # Extra credit appended to every description. Footage fetched by feed: already
 # carries its own credit from the source's licence metadata, so leave this empty
