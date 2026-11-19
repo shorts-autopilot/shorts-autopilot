@@ -1,9 +1,11 @@
 {
   "seen": [
-    "internet_archive:Public_Prosecutor--Strange_Suicide:PublicProsecutor--Strange_Suicide.mp4",
-    "internet_archive:1945-04-05_Air_Army_Invades_Germany:1945-04-05_Air_Army_Invades_Germany.mp4",
+    "internet_archive:hot-dogs-on-ice-1938:Hot Dogs On Ice (1938).ia.mp4",
     "internet_archive:1956-09-31_Space_Secrets:1956-09-31_Space_Secrets.mp4",
-    "internet_archive:13_demon_street_vine_of_death_1959:demon_street_of_death.mp4"
+    "internet_archive:Public_Prosecutor--Strange_Suicide:PublicProsecutor--Strange_Suicide.mp4",
+    "internet_archive:13_demon_street_vine_of_death_1959:demon_street_of_death.mp4",
+    "internet_archive:4_20210907:1.mp4",
+    "internet_archive:1945-04-05_Air_Army_Invades_Germany:1945-04-05_Air_Army_Invades_Germany.mp4"
   ],
   "log": [
     {
@@ -37,6 +39,22 @@
       "page": "https://archive.org/details/13_demon_street_vine_of_death_1959",
       "credit": "Footage: Internet Archive \u2014 13 Demon Street (The Vine of Death) (public domain) https://archive.org/details/13_demon_street_vine_of_death_1959",
       "at": "2026-11-18T15:15:38"
+    },
+    {
+      "uid": "internet_archive:4_20210907:1.mp4",
+      "title": "Udayer Pathey (1944)",
+      "licence": "public domain",
+      "page": "https://archive.org/details/4_20210907",
+      "credit": "Footage: Bimal Roy \u2014 Udayer Pathey (1944) (public domain) https://archive.org/details/4_20210907",
+      "at": "2026-11-19T05:49:45"
+    },
+    {
+      "uid": "internet_archive:hot-dogs-on-ice-1938:Hot Dogs On Ice (1938).ia.mp4",
+      "title": "Hot Dogs On Ice (1938)",
+      "licence": "public domain",
+      "page": "https://archive.org/details/hot-dogs-on-ice-1938",
+      "credit": "Footage: Manny Gould, Ben Harrison, Allen Rose \u2014 Hot Dogs On Ice (1938) (public domain) https://archive.org/details/hot-dogs-on-ice-1938",
+      "at": "2026-11-19T05:51:43"
     }
   ]
 }
