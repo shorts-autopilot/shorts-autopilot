@@ -1,13 +1,20 @@
 {
   "seen": [
+    "wikimedia:File:Michelle Dilhara\u2019s viral speech \"We Need Heroes, Not Followers\" at United Nations COP17.webm",
+    "internet_archive:VAS_09_Sea_And_Sand:VAS_09_Sea_And_Sand_512kb.mp4",
+    "wikimedia:File:President Ronald Reagan's Radio Address to the Nation on Free and Fair Trade from Camp David, Maryland.webm",
+    "internet_archive:1945-04-05_Air_Army_Invades_Germany:1945-04-05_Air_Army_Invades_Germany.mp4",
+    "internet_archive:1942-06-15_Scrap_Rubber_Needed:1942-06-15_Scrap_Rubber_Needed_512kb.mp4",
+    "internet_archive:1944-03-20_Blast_Berlin_By_Daylight:1944-03-20_Blast_Berlin_By_Daylight.mp4",
+    "internet_archive:1956-09-31_Space_Secrets:1956-09-31_Space_Secrets.mp4",
+    "internet_archive:4_20210907:1.mp4",
+    "wikimedia:File:South\u2013North Meeting (1948) \u2013 Speech of Kim Ku.webm",
+    "internet_archive:hot-dogs-on-ice-1938:Hot Dogs On Ice (1938).ia.mp4",
+    "wikimedia:File:Roy Cooper speaks at Stop the Bans veto rally (video).webm",
+    "wikimedia:File:South\u2013North Meeting (1948) \u2013 Speech of Kim Il Sung.webm",
     "internet_archive:13_demon_street_vine_of_death_1959:demon_street_of_death.mp4",
     "internet_archive:Tales_Of_Tomorrow_-_Time_To_Go:TOT_Time_To_Go.mp4",
-    "internet_archive:1956-09-31_Space_Secrets:1956-09-31_Space_Secrets.mp4",
-    "internet_archive:1945-04-05_Air_Army_Invades_Germany:1945-04-05_Air_Army_Invades_Germany.mp4",
-    "internet_archive:Public_Prosecutor--Strange_Suicide:PublicProsecutor--Strange_Suicide.mp4",
-    "internet_archive:VAS_09_Sea_And_Sand:VAS_09_Sea_And_Sand_512kb.mp4",
-    "internet_archive:4_20210907:1.mp4",
-    "internet_archive:hot-dogs-on-ice-1938:Hot Dogs On Ice (1938).ia.mp4"
+    "internet_archive:Public_Prosecutor--Strange_Suicide:PublicProsecutor--Strange_Suicide.mp4"
   ],
   "log": [
     {
@@ -73,6 +80,22 @@
       "page": "https://archive.org/details/VAS_09_Sea_And_Sand",
       "credit": "Footage: Internet Archive \u2014 Sea And Sand (public domain) https://archive.org/details/VAS_09_Sea_And_Sand",
       "at": "2026-11-20T06:09:42"
+    },
+    {
+      "uid": "internet_archive:1942-06-15_Scrap_Rubber_Needed:1942-06-15_Scrap_Rubber_Needed_512kb.mp4",
+      "title": "\"Scrap Rubber Needed\" - F.D.R, 1942/06/15",
+      "licence": "public domain",
+      "page": "https://archive.org/details/1942-06-15_Scrap_Rubber_Needed",
+      "credit": "Footage: Internet Archive \u2014 \"Scrap Rubber Needed\" - F.D.R, 1942/06/15 (public domain) https://archive.org/details/1942-06-15_Scrap_Rubber_Needed",
+      "at": "2026-11-21T05:44:17"
+    },
+    {
+      "uid": "internet_archive:1944-03-20_Blast_Berlin_By_Daylight:1944-03-20_Blast_Berlin_By_Daylight.mp4",
+      "title": "Blast Berlin By Daylight, 1944/03/20",
+      "licence": "public domain",
+      "page": "https://archive.org/details/1944-03-20_Blast_Berlin_By_Daylight",
+      "credit": "Footage: Internet Archive \u2014 Blast Berlin By Daylight, 1944/03/20 (public domain) https://archive.org/details/1944-03-20_Blast_Berlin_By_Daylight",
+      "at": "2026-11-21T05:44:18"
     }
   ]
 }
