@@ -109,6 +109,28 @@
       "scheduled_for": "2026-11-21T18:45:00+00:00",
       "size": "1080x1920",
       "at": "2026-11-21T05:45:41"
+    },
+    {
+      "file": "ia-Radiolog1961.mp4",
+      "start": 147.4,
+      "video_id": "BILERWHLefM",
+      "title": "More than 100 million people living well beyond the destructive",
+      "hook": "More than 100 million people living",
+      "credit": "Footage: U.S. Office of Civil Defense \u2014 Radiological Defense (public domain) https://archive.org/details/Radiolog1961",
+      "scheduled_for": "2026-11-22T09:15:00+00:00",
+      "size": "1080x1920",
+      "at": "2026-11-22T05:50:17"
+    },
+    {
+      "file": "ia-Activity1950_2.mp4",
+      "start": 619.5,
+      "video_id": "PHYOEzBvbpw",
+      "title": "You want to go out and do this?",
+      "hook": "You want to go out and",
+      "credit": "Footage: Campus Film Distributors Corporation \u2014 Activity Group Therapy (Part II) (public domain) https://archive.org/details/Activity1950_2",
+      "scheduled_for": "2026-11-22T18:45:00+00:00",
+      "size": "1080x1920",
+      "at": "2026-11-22T05:50:59"
     }
   ]
 }
