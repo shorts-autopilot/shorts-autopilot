@@ -197,6 +197,28 @@
       "scheduled_for": "2026-11-26T18:45:00+00:00",
       "size": "1080x1920",
       "at": "2026-11-26T05:48:13"
+    },
+    {
+      "file": "ia-InvisibleMan-TheLockedRoom1958.mp4",
+      "start": 270.2,
+      "video_id": "FiNvds7W7Oo",
+      "title": "Well, I don't want to stay invisible for the rest",
+      "hook": "Well, I don't want to stay",
+      "credit": "Footage: Internet Archive \u2014 Invisible Man - The Locked Room (public domain) https://archive.org/details/InvisibleMan-TheLockedRoom1958",
+      "scheduled_for": "2026-11-27T09:15:00+00:00",
+      "size": "1080x1920",
+      "at": "2026-11-27T05:51:23"
+    },
+    {
+      "file": "ia-TheAdventuresOfOzzieHarriet_1676.ogv",
+      "start": 612.1,
+      "video_id": "761AmjHBTRE",
+      "title": "Maybe not quite that far",
+      "hook": "Maybe not quite that far",
+      "credit": "Footage: kjs \u2014 The Adventures of Ozzie & Harriet (public domain) https://archive.org/details/TheAdventuresOfOzzieHarriet_1676",
+      "scheduled_for": "2026-11-27T18:45:00+00:00",
+      "size": "1080x1920",
+      "at": "2026-11-27T05:52:16"
     }
   ]
 }
