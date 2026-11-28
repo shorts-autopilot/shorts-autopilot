@@ -219,6 +219,28 @@
       "scheduled_for": "2026-11-27T18:45:00+00:00",
       "size": "1080x1920",
       "at": "2026-11-27T05:52:16"
+    },
+    {
+      "file": "ia-ItHappen1937.mp4",
+      "start": 157.3,
+      "video_id": "umBktFJoUpY",
+      "title": "The Cheerio and Pupsicle Department, the ice cream is dipped",
+      "hook": "The Cheerio and Pupsicle Department, the",
+      "credit": "Footage: Cooper (Edwin) Productions \u2014 It Happened in Mayfair (public domain) https://archive.org/details/ItHappen1937",
+      "scheduled_for": "2026-11-28T09:15:00+00:00",
+      "size": "1080x1920",
+      "at": "2026-11-28T05:47:26"
+    },
+    {
+      "file": "ia-ItHappen1937.mp4",
+      "start": 476.9,
+      "video_id": "PfDQEiMi6gc",
+      "title": "A real asset to Mayfair",
+      "hook": "A real asset to Mayfair",
+      "credit": "Footage: Cooper (Edwin) Productions \u2014 It Happened in Mayfair (public domain) https://archive.org/details/ItHappen1937",
+      "scheduled_for": "2026-11-28T18:45:00+00:00",
+      "size": "1080x1920",
+      "at": "2026-11-28T05:48:41"
     }
   ]
 }
